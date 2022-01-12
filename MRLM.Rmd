@@ -558,6 +558,8 @@ Construya una gráfica de probabilidad normal para los residuales estudentizados
 ```{r, echo = F}
 residualPlots(model,tests=FALSE,type="rstudent",quadratic=FALSE,col=2,cex=1.5)
 ```
+En los gráficos de las variables GRE.Score, TOEFL.Score y CGPA, además de los valores ajustados no se observa ningún tipo de patrón, por lo tanto se cumple el supuesto de varianza constante y no hay observacipnes atípicas.
+
 
 \section{Prueba de normalidad para los residuales estudentizados}
 Construya una gráfica de probabilidad normal para los residuales estudentizados. ¿Existen razones para dudar de la hipótesis de normalidad sobre los errores en este modelo?
@@ -568,6 +570,8 @@ qqnorm(rstudent(model),cex=2)
 qqline(rstudent(model),col=2)
 legend("topleft",legend=rbind(c("Statistic W","p.value"),round(c(test$statistic,test$p.value),digits=5)),cex=0.4)
 ```
+
+Aunque muchos datos se concentren cerca de la recta ajustada, se puede observar cantidad considerable que se aleja de esta generando una asimetría hacia la derecha, además al realizar la prueba de Shapiro-Wilk tenemos un p valor de 0.00099 por lo que podemos rechazar la hipótesis nula (los datos tienen comportamiento normal), concluyendo de esta manera que no son normales.
 
 \section{Diagnostico sobre la presencia de observaciones atipicas, de balanceo y/o influenciales y conclusiones}
 
