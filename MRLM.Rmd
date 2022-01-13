@@ -26,6 +26,7 @@ library(leaps)
 library(MASS)
 library(perturb)
 library(olsrr)
+library(corrplot)
 
 ggplot2::theme_set(ggplot2::theme_bw()) 
 ```
@@ -53,34 +54,19 @@ data <- data[1:100, -c(1,4,8)]
 ```
 
 \section{Base de datos}
-\subsection{Breve Descripción de los Datos contextualizando el problema y explicando cada una de las variables involucradas en el modelo.}
+\subsection{Breve Descripción de los Datos}
 
 La base de datos disponible en Kaggle corresponde a puntajes de admision creados para la predicción de las admisiones de posgrado en La India. 
 Cuenta con 400 observaciones y 9 variables. De las cuales se consideran los primeros 100 estudiantes y 6 variables de interes por indicación de la docente.
 
 |**Variables**|**Descripción**|
 |-----------|-------------| 
-|**Chance.of.Admit:**| Posibilidad de ser admitido. Variable numérica
-continua de 0-1|
-|**GRE Score:**      |Puntaje de Examen que proporciona a las
-escuelas una medida común para la comparación
-de la capacidad de razonamiento verbal,
-razonamiento cuantitativo, y habilidades para
-pensar y escribir de forma analítica. Variable
-numérica que toma valores de 294 - 340.|
-|**TOEFL Score:**    |Puntaje en prueba estandarizada de dominio del
-idioma inglés. Variable numérica que toma
-valores del 93 - 120|
-|**SOP:**            |Puntaje en Ensayo de admisión o solicitud de
-postgrado. Variable numérica que toma valores
-del 1 - 5, tomando el valor medio entre cada par
-de enteros en el intervalo.|
-|**LOR:**            |Puntaje en Carta de recomendación. Variable
-numérica que toma valores del 1.5 - 5, tomando
-el valor medio entre cada par de enteros en el
-intervalo.|
-|**CGPA:**           |Promedio general acumulado en el pregrado.
-Variable numérica que toma valores del 6.8 - 9.8.| 
+|**Chance.of.Admit:**| Posibilidad de ser admitido. Variable numérica continua de 0-1.|
+|**GRE Score:**      | Puntaje de Examen que proporciona a las escuelas una medida común para la comparación de la capacidad de razonamiento verbal, razonamiento cuantitativo, y habilidades para pensar y escribir de forma analítica. Variable numérica que toma valores de 294 - 340.|
+|**TOEFL Score:**    | Puntaje en prueba estandarizada de dominio del idioma inglés. Variable numérica que toma valores del 93 - 120.|
+|**SOP:**            | Puntaje en Ensayo de admisión o solicitud de postgrado. Variable numérica que toma valores del 1 - 5, tomando el valor medio entre cada par de enteros en el intervalo.|
+|**LOR:**            | Puntaje en Carta de recomendación. Variable numérica que toma valores del 1.5 - 5, tomando el valor medio entre cada par de enteros en el intervalo.|
+|**CGPA:**           | Promedio general acumulado en el pregrado. Variable numérica que toma valores del 6.8 - 9.8.| 
 
 
 **Renombrando las variables:**
@@ -111,13 +97,13 @@ geom_histogram(breaks=hist(data[,i],breaks = "FD",plot=F)$breaks,
 gg2
 ```
 
--Se observan relaciones de interés.
+- Se observan relaciones de interés.
  
--La variable **Chance.of.Admit** (Posibilidad de ser admitido) se encuentran altamente correlacionada con las variables **GRE.Score**, **TOFL.Score**, **SOP**, **LOR** y **CGPA** con correlaciones de **0.808**, **0.780**, **0.614**, **0.743** y **0.833** respectivamente. Con relaciones del tipo lineales positivas. 
+- La variable **Chance.of.Admit** (Posibilidad de ser admitido) se encuentran altamente correlacionada con las variables **GRE.Score**, **TOFL.Score**, **SOP**, **LOR** y **CGPA** con correlaciones de **0.808**, **0.780**, **0.614**, **0.743** y **0.833** respectivamente. Con relaciones del tipo lineales positivas. 
  
--La variable **CGPA** (Promedio general acumulado en el pregrado) se encuentran altamente correlaciona con las variables **GRE.Score**, **TOFL.Score**, **SOP** y **LOR** con correlaciones de **0.804**, **0.812**,**0.652**y **0.739** respectivamente. Con relaciones del tipo lineales positivas. Esto nos puede indicar redundancia en el modelo o multicolinealidad lo cual validaremos más adelante.
+- La variable **CGPA** (Promedio general acumulado en el pregrado) se encuentran altamente correlaciona con las variables **GRE.Score**, **TOFL.Score**, **SOP** y **LOR** con correlaciones de **0.804**, **0.812**,**0.652**y **0.739** respectivamente. Con relaciones del tipo lineales positivas. Esto nos puede indicar redundancia en el modelo o multicolinealidad lo cual validaremos más adelante.
 
--La variable **GRE.Score** se encuentra altamente correlacionadas con las variables **TOFL.Score** y  **CGPA**. Y moderadamente con las variables **SOP** y **LOR**.
+- La variable **GRE.Score** se encuentra altamente correlacionadas con las variables **TOFL.Score** y  **CGPA**. Y moderadamente con las variables **SOP** y **LOR**.
  
 \section{Modelo Ajustado de Regresion Lineal múltiple (MRLM)}
 ```{r, echo = F}
@@ -143,8 +129,9 @@ $$\widehat{Y}_i = -1.7723 + 0.0041X_{i1} + 0.0029X_{i2} - 0.0120X_{i3} + 0.0428X
 
 \subsection{Tabla ANOVA}
 
-```{r, echo = F}
-kable(anova(rsm(Chance.of.Admit~FO(GRE.Score,TOEFL.Score,SOP,LOR,CGPA), data = data)))
+```{r, echo = F, warning = F}
+ANOVA <- kable(anova(rsm(Chance.of.Admit~FO(GRE.Score,TOEFL.Score,SOP,LOR,CGPA), data = data)))
+kable_styling(ANOVA, full_width=FALSE)
 ```
 
 Donde $\text{F-value} = F_0 = \frac{\text{MSR}}{MSE} \sim F_{5, 94}$
@@ -169,7 +156,6 @@ $$R^2 = \frac{2.3674478}{2.3674478+0.6744272} = `r 2.3674478/(2.3674478+0.674427
 El **77.83%** de la variabilidad de la posibilidad de ser admitido es explicada por la relación con las variables GRE.Score, TOEFL.Score, SOP, LOR y CGPA.
 
 \section{Coeficientes de regresión estandarizados}
-Calcule los coeficientes de regresión estandarizados y concluya acerca de cuál de las variables aporta máss a la respuesta según la magnitud en valor absoluto de tales coeficientes (cuidado, no confunda esto con la significancia de los coeficientes de regresión)
 
 \subsection{Tabla de coeficientes estandarizados}
 ```{r, echo = F}
@@ -193,7 +179,6 @@ kable(miscoeficientes (model,data))
 Gracias a esta tabla, se puede deducir con una diferencia en el valor muy pequeña que, las variables que más aportan según el valor de sus coeficientes estandarizados son \textbf{CGPA} y \textbf{GRE.Score}
 
 \section{Significancia individual de los parámetros del modelo}
-Pruebe la significancia individual de cada uno de los parámetros del modelo (excepto intercepto), usando la prueba t. Establezca claramente la prueba de hipótesis y el criterio de decisión.
 \subsection{Tabla de la significancia individual de los parámetros}
 ```{r, echo = F}
 tabla.coef <- summary(model)$coefficients 
@@ -224,7 +209,7 @@ H_1&: \beta_1 \neq 0
 \end{cases}
 $$
 
-Analizando el **valor-p = 0.0166** del parámetro $\beta_1$ y con una confianza del **95%** hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_1$ es significativo.
+Analizando el **valor-p = 0.0166** del parámetro $\beta_1$ y con una confianza del **95%** hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_1$ es significativo.Esto quiere decir que **GRE Score** ayuda a explicar la posibilidad de ser admitido a una carrera de postgrado dado que las demas pruebas de aptitud se encuentran en el modelo. 
 
 $$
 \begin{cases}
@@ -235,7 +220,7 @@ H_1&: \beta_2 \neq 0
 \end{cases}
 $$
 
-Analizando el **valor-p = 0.3488** del parámetro $\beta_2$ y con una confianza del **95%** no hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_2$ no es significativo.
+Analizando el **valor-p = 0.3488** del parámetro $\beta_2$ y con una confianza del **95%** no hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_2$ no es significativo.Esto quiere decir que **TOEFL.Score** no ayuda a explicar la posibilidad de ser admitido a una carrera de postgrado dado que las demas pruebas de aptitud se encuentran en el modelo. 
 
 $$
 \begin{cases}
@@ -246,7 +231,7 @@ H_1&: \beta_3 \neq 0
 \end{cases}
 $$
 
-Analizando el **valor-p = 0.3152** del parámetro $\beta_3$ y con una confianza del **95%** no hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_3$ no es significativo.
+Analizando el **valor-p = 0.3152** del parámetro $\beta_3$ y con una confianza del **95%** no hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_3$ no es significativo. Esto quiere decir que **SOP** no ayuda a explicar la posibilidad de ser admitido a una carrera de postgrado dado que las demas pruebas de aptitud se encuentran en el modelo.
 
 $$
 \begin{cases}
@@ -257,7 +242,7 @@ H_1&: \beta_4 \neq 0
 \end{cases}
 $$
 
-Analizando el **valor-p = 0.3152** del parámetro $\beta_4$ y con una confianza del **95%** no hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_4$ no es significativo.
+Analizando el **valor-p = 0.0034** del parámetro $\beta_4$ y con una confianza del **95%** no hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_4$ es significativo. Esto quiere decir que **LOR**  ayuda a explicar la posibilidad de ser admitido a una carrera de postgrado dado que las demas pruebas de aptitud se encuentran en el modelo.
 
 $$
 \begin{cases}
@@ -268,7 +253,7 @@ H_1&: \beta_5 \neq 0
 \end{cases}
 $$
 
-Analizando el **valor-p = 0.0050** del parámetro $\beta_5$ y con una confianza del **95%** hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_5$ es significativo.
+Analizando el **valor-p = 0.0050** del parámetro $\beta_5$ y con una confianza del **95%** hay evidencia para rechazar la hipótesis nula. Luego el parámetro $\beta_5$ es significativo.Esto quiere decir que **CGPA**  ayuda a explicar la posibilidad de ser admitido a una carrera de postgrado dado que las demas pruebas de aptitud se encuentran en el modelo.
 
 \section{Sumas de cuadrados extras}
 
@@ -311,6 +296,8 @@ Con un nivel de significancia de $\alpha = 0.05$ el valor crítico es $f_{0.05,2
 
 Como $F_0 = 1.1957338 < f_{0.05,2,94}  = 3.093266$, No hay evidencia para rechazar la **hipótesis nula**. por lo tanto $X_2$(**TOEFL.Score**) y $X_3$(**SOP**) no ayudan a explicar la posibilidad de ser admitido a una carrera de postgrado dado que en el modelo estan presentes **GRE.Score**, **LOR** y **CGPA**. 
 
+Tomamos esta prueba de hipótesis con la finalidad de mirar si dicho modelo era significativo globalmente. Con las pruebas de significancia individual de los parámetros y mirando  la magnitud de los parámetros estandarizados sabíamos que $X_2$(**TOEFL.Score**) y $X_3$(**SOP**) no eran significativos y no ayudaban a explicar la posibilidad de ser admitidos a una carrera de postgrado. Dicha hipótesis nos permitió descartar este modelo y de esta manera poder continuar en búsqueda del modelo más adecuado.
+
 
 
 \section{Sumas de cuadrados tipo I y tipo II}
@@ -324,23 +311,58 @@ kable(anova(model))
 ```
 
 
+**SS1**
 
--$X_1$ $SSR(X_1) = 1.98537$
+- $X_1$ $SSR(X_1) = 1.98537$ Dicho modelo tiene mayor **aumento** del **SSR**
 
--$X_2|X_1$ $SSR(X_2|X_1) = 0.05600$
+- $X_2|X_1$ $SSR(X_2|X_1) = 0.05600$
 
--$X_3|X_1,X_2$ $SSR(X_3|X_1,X_2) = 0.1181923$
+- $X_3|X_1,X_2$ $SSR(X_3|X_1,X_2) = 0.1181923$
 
--$X_4|X_1,X_2,X_3$ $(X_4|X_1,X_2,X_3) = 0.14856$
+- $X_4|X_1,X_2,X_3$ $(X_4|X_1,X_2,X_3) = 0.14856$
 
--$X_5|X_1,X_2,X_3,X_4$ $SSR(X_5|X_1,X_2,X_3,X_4) = 0.05933$
+- $X_5|X_1,X_2,X_3,X_4$ $SSR(X_5|X_1,X_2,X_3,X_4) = 0.05933$ Dicho modelo tiene la mayor **disminución** del **SSR**. Esto nos indica que es el modelo  
 
 \subsection{Sumas de cuadrados parciales}
-
 ## Tabla Anova 
 ```{r, echo = F}
 kable(Anova(model))
 ```
+
+$SS2$
+
+- $X_1|X_2,X_3,X_4,X_5$  $SSR(X_1|X_2,X_3,X_4,X_5)$
+
+- $X_2|X_1,X_3,X_4,X_5$  $SSR(X_2|X_1,X_3,X_4,X_5)$
+
+- $X_3|X_1,X_2,X_4,X_5$  $SSR(X_3|X_1,X_2,X_4,X_5)$
+
+- $X_4|X_1,X_2,X_3,X_5$  $SSR(X_4|X_1,X_2,X_3,X_5)$
+
+- $X_5|X_1,X_2,X_3,X_4$  $SSR(X_5|X_1,X_2,X_3,X_4)$
+
+\subsection{Prueba de hipótesis}
+$$
+\begin{cases}
+\begin{aligned}
+H_0&: \beta_j = 0 \space \space \space con \space j = 1, \ldots, 5\\
+H_1&: \beta_j \neq 0
+\end{aligned}
+\end{cases}
+$$
+
+
+- Analizando el **p-valor** se puede concluir que el efecto parcial de incluir $X_1$(GRE.Score) dado que en modelo se encuentra $X_2,X_3,X_4,X_5$ es significativa de esta manera aumentando el SSR = 0.0427161.
+
+- Analizando el **p-valor** se puede concluir que el efecto parcial de incluir $X_4$(LOR) dado que en modelo se encuentra $X_1,X_2,X_3,X_5$ es significativa de esta manera aumentando el SSR = 0.0646740.
+
+- Analizando el **p-valor** se puede concluir que el efecto parcial de incluir $X_5$(CGPA) dado que en modelo se encuentra $X_1,X_2,X_3,X_4$ es significativa de esta manera aumentando el SSR = 0.0593270.
+
+- Se observa que $X_4$(LOR) tiene el efecto parcial mas grande con un **SSR = 0.0646740**.
+
+- Analizando el **p-valor** se puede concluir que el efecto parcial de incluir $X_2$(TOEFL.Score) dado que en modelo se encuentra $X_1,X_3,X_4,X_5$ no es significativa de esta manera disminuye el SSR = 0.0063619.
+
+- Analizando el **p-valor** se puede concluir que el efecto parcial de incluir $X_3$(SOP) dado que en modelo se encuentra $X_1,X_2,X_4,X_5$ es significativa de esta manera aumentando el SSR = 0.0073158.
 
 
 \section{Residuales estudentizados vs. Valores ajustados}
@@ -383,6 +405,8 @@ outliers = data.frame(Ajustados=model$fitted.values, Errores=residuales_studenti
 outliers_orden <- outliers %>% arrange(Errores)
 kable(head(outliers_orden), caption = "Valores ajustados VS Residuales Estudentizados")
 ```
+
+
 ```{r, include = F}
 residuales <- data.frame(rs=rstudent(model))
 atipicos <- residuales %>% filter(abs(rs) > 3)
@@ -390,23 +414,28 @@ kable(atipicos)
 ```
 
 
-```{r, echo = F}
-influence.measures(model)
-
+```{r, include = F}
+infl <- influence.measures(model)
+k_infl <- kable((summary(infl)))
 ```
+
+```{r}
+kable_styling(k_infl, full_width=FALSE,  font_size=8)
+```
+
 ```{r, echo = F}
 influence.measures(model)$is.inf
 outliers = data.frame(ajustados=model$fitted.values,errores=model$residuals)
 ```
 
--La observación **10** es un **outlier** ya que el valor absoluto de su residual estudentizado es **3.01**, mayor a **3**.
+- La observación **10** es un **outlier** ya que el valor absoluto de su residual estudentizado es **3.01**, mayor a **3**.
 
--De acuerdo al **COVRATIO** y el **DFFITS**, las observaciones **10**,**11**, **32**, **37**, **53**, **65**, **66** y **92** son **influenciables**. 
+- De acuerdo al **COVRATIO** y el **DFFITS**, las observaciones **10**,**11**, **32**, **37**, **53**, **65**, **66** y **92** son **influenciables**. 
 
--Para evaluar las observaciones de **balanceo** miramos las que superan la cota de $\frac{2(k+1)}{n} = \frac{2(5+1)}{100} = 0.12$. 
+- Para evaluar las observaciones de **balanceo** miramos las que superan la cota de $\frac{2(k+1)}{n} = \frac{2(5+1)}{100} = 0.12$. 
 Las observaciones **32**, **37**, **38**, **53** y **92** superan dicha cota y por lo tanto, son de balanceo.
 
--En conclusión, las observaciones **10**, **11**, **53**, **65** y **66** son **influenciables**; la observación **38** es de **balanceo** y las observaciones **32**, **37**, **53** y **92** son **influenciables** y de **balanceo**.
+- En conclusión, las observaciones **10**, **11**, **53**, **65** y **66** son **influenciables**; la observación **38** es de **balanceo** y las observaciones **32**, **37**, **53** y **92** son **influenciables** y de **balanceo**.
 
 
 \section{Ejercicio11}
@@ -435,6 +464,12 @@ legend("topleft",legend=rbind(c("Statistic W","p.value"),round(c(test_sin_influe
 Para el modelo con todas las variables y sin las observaciones 10, 38 y 92, realice diagnósticos de multicolinealidad mediante
   
 \subsection{Matriz de correlación de las variables predictoras}
+```{r, echo = F}
+correlacion <- cor(AdmissionPredict_sin_influencias)
+corrplot(correlacion, method="number", type="upper")
+```
+
+
 ```{r, echo = F}
 kable(cor(AdmissionPredict_sin_influencias))
 ```
@@ -493,6 +528,17 @@ plot(k)
 \subsection{Selección según el $R^2_{adj}$}
 ```{r, echo = F}
 modelo_r2 = lm(Chance.of.Admit~GRE.Score+CGPA,data = AdmissionPredict_sin_influencias)
+tabla.coef <- summary(modelo_r2)$coefficients 
+row.names(tabla.coef) <- c("Intercepto", "GRE.Score", "CGPA")
+tabla.coef %>%
+  kable(row.names = T, escape = F,
+        col.names = c("Estimación", "Error estándar", "$T_0$", "Valor P"),
+        align = "c", caption = "Resumen de los coeficientes", booktab = T, digits = 13) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+```{r, echo = F}
+modelo_r2 = lm(Chance.of.Admit~GRE.Score+CGPA,data = AdmissionPredict_sin_influencias)
 summary(modelo_r2)
 ```
 
@@ -522,6 +568,16 @@ kable(anova(rsm(Chance.of.Admit~FO(GRE.Score,CGPA), data = AdmissionPredict_sin_
 ```{r, echo = F}
 modelo_cp = lm(Chance.of.Admit~GRE.Score+LOR+CGPA+SOP,data = AdmissionPredict_sin_influencias)
 summary(modelo_cp)
+```
+```{r, echo = F}
+modelo_cp = lm(Chance.of.Admit~GRE.Score+LOR+CGPA+SOP,data = AdmissionPredict_sin_influencias)
+tabla.coef <- summary(modelo_cp)$coefficients 
+row.names(tabla.coef) <- c("Intercepto", "GRE.Score", "LOR", "CGPA","SOP")
+tabla.coef %>%
+  kable(row.names = T, escape = F,
+        col.names = c("Estimación", "Error estándar", "$T_0$", "Valor P"),
+        align = "c", caption = "Resumen de los coeficientes", booktab = T, digits = 13) %>%
+  kable_styling(latex_options = "HOLD_position")
 ```
 
 **Ecuacion ajustada** 
