@@ -69,7 +69,7 @@ Cuenta con 400 observaciones y 9 variables. De las cuales se consideran los prim
 |**CGPA:**           | Promedio general acumulado en el pregrado. Variable numérica que toma valores del 6.8 - 9.8.| 
 
 
-**Renombrando las variables:**
+\subsection{Renombrando las variables:}
 
 - **GRE Score** = $X_1$
 
@@ -321,7 +321,7 @@ kable(anova(model))
 
 - $X_4|X_1,X_2,X_3$ $(X_4|X_1,X_2,X_3) = 0.14856$
 
-- $X_5|X_1,X_2,X_3,X_4$ $SSR(X_5|X_1,X_2,X_3,X_4) = 0.05933$ Dicho modelo tiene la mayor **disminución** del **SSR**. Esto nos indica que es el modelo  
+- $X_5|X_1,X_2,X_3,X_4$ $SSR(X_5|X_1,X_2,X_3,X_4) = 0.05933$ Dicho modelo tiene la mayor **disminución** del **SSR**.  
 
 \subsection{Sumas de cuadrados parciales}
 ## Tabla Anova 
@@ -367,7 +367,6 @@ $$
 
 \section{Residuales estudentizados vs. Valores ajustados}
 
-Construya y analice gráficos de los residuales estudentizados vs. Valores ajustados y contra las variables de regresión utilizadas. ¿Qué información proporcionan estas gráficas?
 
 \subsection{Gráfico de los residuales estudentizados vs. Valores ajustados}
 
@@ -398,12 +397,14 @@ $$
 Aunque muchos residuales se concentren cerca de la recta ajustada, se puede observar cantidad considerable que se aleja de esta generando una asimetría hacia la derecha, además al realizar la prueba de **Shapiro-Wilk** tenemos un **p valor de 0.00099** por lo que podemos rechazar la hipótesis nula, concluyendo de esta manera que hay evidencia para decir que no tienen un comportamiento normal.
 
 
-\section{Diagnostico sobre la presencia de observaciones atípicas                                                                                       , de balanceo y/o influenciales y conclusiones}
+\section{Diagnostico sobre la presencia de observaciones atípicas, de balanceo y/o influenciales y conclusiones}
+
+\subsection{Valores ajustados VS Residuales Estudentizados}
 ```{r, echo = F}
 residuales_studentizado = studres(model)
 outliers = data.frame(Ajustados=model$fitted.values, Errores=residuales_studentizado)
 outliers_orden <- outliers %>% arrange(Errores)
-kable(head(outliers_orden), caption = "Valores ajustados VS Residuales Estudentizados")
+kable(head(outliers_orden))
 ```
 
 
@@ -419,14 +420,30 @@ infl <- influence.measures(model)
 k_infl <- kable((summary(infl)))
 ```
 
-```{r}
+\subsection{Valores influenciables}
+```{r, echo = F}
 kable_styling(k_infl, full_width=FALSE,  font_size=8)
 ```
 
-```{r, echo = F}
+```{r, include = F}
 influence.measures(model)$is.inf
 outliers = data.frame(ajustados=model$fitted.values,errores=model$residuals)
 ```
+
+```{r, echo = F, message=FALSE, warning=FALSE}
+#influence.measures(model)
+#balancea <- as.data.frame(influence.measures(model)$infl)
+#influenciables <- as.data.frame(influence.measures(model)$is.inf)
+influenciablesprueba <- read.table("files/influenciables.txt")
+kable(influenciablesprueba)
+# influencias: 10-11-32-37-53-65-66-92
+```
+
+```{r, include = F, message=F, warning=F}
+debalanceo <- read.table("files/balanceo.txt")
+kable(debalanceo)
+```
+
 
 - La observación **10** es un **outlier** ya que el valor absoluto de su residual estudentizado es **3.01**, mayor a **3**.
 
@@ -440,11 +457,7 @@ Las observaciones **32**, **37**, **38**, **53** y **92** superan dicha cota y p
 
 \section{Ejercicio11}
 
-Ajuste el modelo de regresión sin las observaciones 10, 38 y 92, suponga que se establece que hay un error de digitación con estas dos observaciones, presente sólo la tabla de parámetros ajustados resultante ¿Cambian notoriamente las estimaciones de los parámetros, sus errores estándard y/o la signficancia? ¿Qué concluye al respecto? Evalúe el gráfico de normalidad para los residuales estudentizados para este ajuste ¿mejoró la normalidad?
-
-Concluya sobre los efectos de este par de observaciones.
-
-```{r, echo = F}
+```{r, include = F}
 AdmissionPredict_sin_influencias <- data %>% slice(-c(10, 38, 92)) 
 
 modelo_sin_influencias <- lm(Chance.of.Admit~.,data = AdmissionPredict_sin_influencias)
@@ -459,20 +472,70 @@ qqline(rstudent(modelo_sin_influencias),col=2)
 legend("topleft",legend=rbind(c("Statistic W","p.value"),round(c(test_sin_influencias$statistic,test_sin_influencias$p.value),digits=5)),cex=0.4)
 
 ```
+
+
+```{r, echo = F, include=FALSE}
+AdmissionPredict_sin_influencias <- data %>% slice(-c(10, 38, 92)) 
+
+modelo_sin_influencias <- lm(Chance.of.Admit~.,data = AdmissionPredict_sin_influencias)
+```
+
+```{r, echo = F}
+tabla.coef <- summary(modelo_sin_influencias)$coefficients 
+row.names(tabla.coef) <- c("$\\beta_0$", "$\\beta_1$", "$\\beta_2$", "$\\beta_3$", "$\\beta_4$", "$\\beta_5$")
+tabla.coef %>%
+  kable(row.names = T, escape = F,
+        col.names = c("Estimación", "Error estándar", "$T_0$", "Valor P"),
+        align = "c", caption = "Tabla de parámetros ajustados resultantes", booktab = T, digits = 4) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+Para validar si los cambios fueron notorios en la estimación de los parámetros y los errores estándar, debido a que la diferencia entre ambos modelos consiste en la exclusión en el segundo modelo de las medidas que se supone que fueron errores de digitación, se presenta una tabla de diferencias relativas respecto al primer modelo. Se evidencia que para los parámetros $\beta_1$, $\beta_2$ y $\beta_3$ los cambios fueron muy notorios; $\beta_2$ se estimó en un valor 96% menor al inicialmente calculado, $\beta_3$ se estimó en un valor 122% mayor al calculado en el primer modelo, y $\beta_1$ en el segundo modelo excedió al valor del primer modelo en 31.4%. Los errores estándar no cambiaron tanto, el mayor cambio relativo fue de cerca del 6% para $\beta_4$, cuyo valor en el segundo modelo fue `r 0.0143 -0.0134 ` unidades menos que el calculado en el primer modelo. 
+
+```{r, echo=FALSE}
+tabla.dif <- (summary(modelo_sin_influencias)$coefficients - summary(model)$coefficients)/summary(model)$coefficients
+
+row.names(tabla.dif) <- c("$\\beta_0$", "$\\beta_1$", "$\\beta_2$", "$\\beta_3$", "$\\beta_4$", "$\\beta_5$")
+tabla.dif <- as.data.frame(tabla.dif)
+tabla.dif <- subset(tabla.dif, select = c(Estimate, `Std. Error`))
+
+tabla.dif %>% 
+  kable(row.names = T, escape = F,
+        col.names = c("Estimación", "Error estándar"),
+        align = "c", caption = "Diferencias relativas respecto al primer modelo", booktab = T, digits = 4) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+Con un $\alpha = 0.05$ hubo diferencias para el parámetro $\beta_3$ que no era significativo en el primer modelo y en el segundo ya es significativo (con valore-p de 0.0303 en el segundo modelo y 0.3152 en el primero).
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#anova(rsm(Chance.of.Admit~FO(GRE.Score,TOEFL.Score,SOP,LOR,CGPA), data = AdmissionPredict_sin_influencias))
+#summary(modelo_sin_influencias)
+
+#residualPlots(modelo_sin_influencias,tests=FALSE,type="rstudent",quadratic=FALSE,col=2,cex=1.5)
+
+par(mfrow = c(1,2))
+
+test=shapiro.test(rstudent(model))
+qqnorm(rstudent(model),cex=2, main = "Normal Q-Q Plot modelo 1")
+qqline(rstudent(model),col=2)
+legend("topleft",legend=rbind(c("Statistic W","p.value"),round(c(test$statistic,test$p.value),digits=5)),cex=0.4)
+
+test_sin_influencias = shapiro.test(rstudent(modelo_sin_influencias)) #Test de normalidad sobre residuales estudentizados
+qqnorm(rstudent(modelo_sin_influencias),cex=2, main = "Normal Q-Q Plot modelo 2")
+qqline(rstudent(modelo_sin_influencias),col=2)
+legend("topleft",legend=rbind(c("Statistic W","p.value"),round(c(test_sin_influencias$statistic,test_sin_influencias$p.value),digits=5)),cex=0.4)
+
+```
+Se logra observar gráficamente que la normalidad mejoró aunque no es lo suficientemente significativa para que dicho modelo cumpla los supuestos de normalidad. 
 \section{Ejercicio 12}
 
-Para el modelo con todas las variables y sin las observaciones 10, 38 y 92, realice diagnósticos de multicolinealidad mediante
-  
 \subsection{Matriz de correlación de las variables predictoras}
 ```{r, echo = F}
 correlacion <- cor(AdmissionPredict_sin_influencias)
 corrplot(correlacion, method="number", type="upper")
 ```
 
-
-```{r, echo = F}
-kable(cor(AdmissionPredict_sin_influencias))
-```
 Entre las pruebas **GRE** - **TOEFL**, **GRE** - **CGPA**, **TOEFL** - **CGPA** y  finalmente **LOR** - **CGPA** se observan **correlaciones fuertes**,
 esto puede indicar problemas de **multicolinealidad**.
 
@@ -505,14 +568,15 @@ vif(modelo_sin_influencias)
 colldiag(modelo_sin_influencias)
 ```
 
+
 \section{Ejericio13}
+![Metodo de seleccion R Ajustado y Cp.](images/rajustado.jpeg)
 
-En el modelo ajustado sin las observaciones 10, 38 y 92, construya modelos de regresión utilizando los métodos de selección (muestre de cada método sólo la tabla de resumen de este y la tabla ANOVA y la de parámetros estimados del modelo finalmente resultante):
-
-```{r, echo = F, warning = F}
+```{r, echo = F, include = F}
 k = ols_step_all_possible(modelo_sin_influencias)
 plot(k)
 ```
+
 
 
 | **# de covariables** | **modelo**                                 | **R2_adj** |
@@ -537,11 +601,6 @@ tabla.coef %>%
   kable_styling(latex_options = "HOLD_position")
 ```
 
-```{r, echo = F}
-modelo_r2 = lm(Chance.of.Admit~GRE.Score+CGPA,data = AdmissionPredict_sin_influencias)
-summary(modelo_r2)
-```
-
 **Ecuacion Ajustada** 
 $$ \hat{Yi} = -2.290157 + 0.005941X_i1 + 0.127528X_i5$$
 
@@ -551,6 +610,7 @@ $$ \hat{Yi} = -2.290157 + 0.005941X_i1 + 0.127528X_i5$$
 kable(anova(rsm(Chance.of.Admit~FO(GRE.Score,CGPA), data = AdmissionPredict_sin_influencias)))
 ```
 
+Como se observan en la tabla anova se tiene un **p-valor < ** $\alpha = 0.05$ por lo tanto hay evidencia para rechazar $H_0$, Esto quiere decir que al menos una de las pruebas(**GRE.Score, CGPA**) ayuda a explicar la variabilidad de ser admitido a un curso de postgrado.
 
 \subsection{Selección según el estadístico $C_p$}
 
@@ -565,10 +625,6 @@ kable(anova(rsm(Chance.of.Admit~FO(GRE.Score,CGPA), data = AdmissionPredict_sin_
 
 - De acuerdo al **Cp** el mejor modelo es el **(26) y~GRE.Score+SOP+LOR+CGPA **
 
-```{r, echo = F}
-modelo_cp = lm(Chance.of.Admit~GRE.Score+LOR+CGPA+SOP,data = AdmissionPredict_sin_influencias)
-summary(modelo_cp)
-```
 ```{r, echo = F}
 modelo_cp = lm(Chance.of.Admit~GRE.Score+LOR+CGPA+SOP,data = AdmissionPredict_sin_influencias)
 tabla.coef <- summary(modelo_cp)$coefficients 
@@ -588,23 +644,46 @@ $$ \hat{Yi} = -1.860801 + 0.005444X_{i1} + 0.026878X_{i3} + 0.039939X_{i4} + 0.0
 kable(anova(rsm(Chance.of.Admit~FO(GRE.Score,LOR,CGPA,SOP), data = AdmissionPredict_sin_influencias)))
 ```
 
-\subsection{Stepwise}
-```{r, echo = F}
+Bajo el metodo de seleccion **Cp** el modelo escogido vs modelo completo **MF** no hay un cambio significante en la estimacion de los parametros. 
+
+```{r, include = F}
 ols_step_both_p(modelo_sin_influencias,prem=0.05, details = T)
 ```
 
+\subsection{Stepwise}
 
-\subsection{Selección hacia adelante o forward}
-```{r, echo = F}
+```{r, echo = F, out.width="98%"}
+knitr::include_graphics('images/stepwise.jpeg')
+```
+
+
+```{r, include = F}
 ols_step_forward_p(modelo_sin_influencias,prem=0.05, details = T)
 ```
 
-\subsection{Selección hacia atrás o backward}
-```{r, echo = F}
+\subsection{Forward}
+```{r, echo = F, out.width="98%"}
+knitr::include_graphics('images/forward.jpeg')
+```
+\subsection{Backward}
+```{r, include = F}
 ols_step_backward_p(modelo_sin_influencias,prem=0.05, details = T)
 ```
 
+```{r, echo = F, out.width="98%"}
+knitr::include_graphics('images/backward.jpeg')
+```
+
+De los tres métodos de selección automática se observa que el análisis de varianza se muestra que al menos una de las covariables
+ aporta a el modelo. Finalmente también se concluye que en los tres métodos de selección las estimaciones no cambian significativamente respecto al modelo completo.
 
 
 \section{Selección del modelo}
-Con base en los anteriores numerales, ¿Cuál modelo sugiere para la variable respuesta? ¿por qué?
+
+| **Modelos**                              | **MSE** |
+|------------------------------------------|---------|
+|(6)y~GRE.Score+CGPA                       |0.0072079|
+|(26)y~GRE.Score+SOP+LOR+CGPA              |0.0061498|
+|(MF)y~GRE.Score+TOEFL.Score+SOP+LOR+CGPA  |0.0071748|
+
+Como se observa en la tabla anterior de los modelos propuestos por medio de los metodos de seleccion el modelo **26** cuenta con un **Error Cuadratico Medio** menor a los recomendados, por lo cual se sugiere ese modelo  **y~GRE.Score+SOP+LOR+CGPA**.
